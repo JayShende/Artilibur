@@ -1,56 +1,141 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import { middleware } from "./middleware";
-import {CreateUserSchema} from "@repo/common/types"
-import {prismaClient} from "@repo/db/client"
+import { CreateRoomSchema, CreateUserSchema, SigninSchema } from "@repo/common/types";
+import { prismaClient } from "@repo/db/client";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "@repo/backend-common/config";
 
-const app=express();
+const app = express();
 app.use(express.json());
 
+app.post("/signup", async (req, res) => {
+  // db call
 
+  const parsedData = CreateUserSchema.safeParse(req.body);
 
-app.post("/signup",async(req,res)=>{
-    // db call
-
-    const response=CreateUserSchema.safeParse(req.body);
-    if(!response.success){
-        res.json({
-            message:"Incorrect Inputs"
-        })
-        return;
-    }
-    const{name,email,password}=req.body;
-    const hashedPwd=await bcrypt.hash(password,5);
-   let newUser:object
-    try{
-        newUser=await prismaClient.user.create({
-            data:{
-                name:name,
-                email:email,
-                password:hashedPwd,
-            }
-        })
-    
-    }catch{
-        res.json({
-            message:"Email Already Exists"
-        })
-    }
-
+  if (!parsedData.success) {
     res.json({
-        message:"Account Created Successfully",
-        user:newUser
-    })
-})
+      message: "Incorrect Inputs",
+    });
+    return;
+  }
+  const hashedPwd = await bcrypt.hash(req.body.password, 5);
 
-app.post("/signin",(req,res)=>{
-
-})
-
-app.post("/ room",middleware,(req,res)=>{
+  try {
+    const newUser = await prismaClient.user.create({
+      data: {
+        name: req.body.name,
+        email: req.body.email,
+        password: hashedPwd,
+      },
+    });
     res.json({
-        roomId:"123"
-    })
-})
+      message: "Account Created Successfully",
+      user: newUser,
+    });
+  } catch (e) {
+    res.json({
+      message: "Email Already Exists",
+      e: e,
+    });
+    return;
+  }
+});
 
+app.post("/signin", async (req, res) => {
+  
+  const parsedData=SigninSchema.safeParse(req.body);
+  if (!parsedData.success) {
+    res.json({
+      message: "Incorrect Inputs",
+    });
+    return;
+  }
+  let user: { id: string,email:string,password:string } | null;
+  try {
+    user = await prismaClient.user.findFirst({
+      where: {
+        email: req.body.email,
+      },
+    });
+  } 
+  catch {
+    res.json({
+      message: "Inavlid Credentails",
+    });
+    return;
+  }
+  
+  if (!user) {
+    res.json({
+      message: "Not Authroised",
+    });
+    return;
+  }
+  
+  const result=await bcrypt.compare(req.body.password,user.password);
+  
+  if(!result){
+    res.json({
+        message:"Inavlid Password"
+    });
+    return;
+  }
+
+  const token =jwt.sign({
+    userId:user.id
+  },JWT_SECRET);
+
+  res.json({
+    message:"Signin Success",
+    token:token
+  })
+  
+  
+
+});
+
+app.post("/room", middleware, async(req:Request, res:Response) => {
+  
+  const parsedData=CreateRoomSchema.safeParse(req.body);
+  if (!parsedData.success) {
+    res.json({
+      message: "Incorrect Inputs",
+    });
+    return;
+  }
+
+  const userId=req.userId;
+
+  if(!userId){
+    res.json({
+      message:"Inavlid Request"
+    });
+    return;
+  }
+
+  let room: { id: number; slug: string; createdAt: Date; adminId: string; } | null=null;
+  try{
+      room =await prismaClient.room.create({
+        data:{
+          slug:parsedData.data.name,
+          adminId:userId
+        }
+      });
+  }
+  catch{
+      res.status(411).json({
+        message: "Room already exists with this name"
+    });
+      // slug needs to be unique , constraint voilated and hence req failed
+  }
+  
+  res.json({
+    roomId:room?.id
+  })
+  
+});
+
+console.log("Running on port 3001");
 app.listen(3001);
