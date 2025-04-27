@@ -4,12 +4,12 @@ type Shape={
     y:number,
     width:number,
     height:number
-} |{
+}|{
     type:"circle",
     centerX:number,
     centerY:number,
     radius:number
-}
+};
 
 export function initDraw(canvas:HTMLCanvasElement){
     const ctx=canvas.getContext("2d");
@@ -47,7 +47,6 @@ export function initDraw(canvas:HTMLCanvasElement){
         height:height
     })
 
-
    })
 
    canvas.addEventListener("mousemove",(e)=>{
@@ -57,8 +56,9 @@ export function initDraw(canvas:HTMLCanvasElement){
         const height=e.clientY-startY;
 
         // For Width and Height use dist=(final - initial)
+        
+        clearCanvas(canvas,existingShapes,ctx);
 
-        ctx.clearRect(0,0,canvas.width,canvas.height);
         ctx.strokeStyle="white"
         ctx.strokeRect(startX,startY,width,height);
         
@@ -66,4 +66,14 @@ export function initDraw(canvas:HTMLCanvasElement){
     }
 
    })
+}
+
+function clearCanvas(canvas:HTMLCanvasElement,existingShapes:Shape[],ctx:CanvasRenderingContext2D){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+        existingShapes.map((shape)=>{
+            if(shape.type=="rect"){
+                ctx.strokeStyle="white"
+                ctx.strokeRect(shape.x,shape.y,shape.width,shape.height);
+            }
+        })
 }
