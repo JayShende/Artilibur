@@ -1,3 +1,16 @@
+type Shape={
+    type:"rect",
+    x:number,
+    y:number,
+    width:number,
+    height:number
+} |{
+    type:"circle",
+    centerX:number,
+    centerY:number,
+    radius:number
+}
+
 export function initDraw(canvas:HTMLCanvasElement){
     const ctx=canvas.getContext("2d");
 
@@ -5,6 +18,7 @@ export function initDraw(canvas:HTMLCanvasElement){
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    let existingShapes:Shape[]=[];
 
     let clicked=false;
     if(!ctx){
@@ -22,7 +36,17 @@ export function initDraw(canvas:HTMLCanvasElement){
 
    canvas.addEventListener("mouseup",(e)=>{
     clicked=false
-    console.log(`${e.clientX} ${e.clientY}`);
+    // on mouseUp add to the existingShapes
+    const width=e.clientX-startX;
+    const height=e.clientY-startY;
+    existingShapes.push({
+        type:"rect",
+        x:startX,
+        y:startY,
+        width:width,
+        height:height
+    })
+
 
    })
 
