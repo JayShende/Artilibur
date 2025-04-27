@@ -13,7 +13,7 @@ async function getChats(roomId:string){
         method:"get",
         url:ur
     });
-    console.log(response.data);
+    // console.log(response.data);
     return response.data;
 }
 
