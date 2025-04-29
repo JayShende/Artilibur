@@ -5,9 +5,10 @@ import { prismaClient } from "@repo/db/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
-
+import cors from 'cors';
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.post("/signup", async (req, res) => {
   // db call
@@ -164,4 +165,4 @@ app.get("/room/:slug",async(req,res)=>{
 })
 
 console.log("Running on port 3001");
-app.listen(3001);
+app.listen(3002);

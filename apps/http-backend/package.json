@@ -9,8 +9,11 @@
   },
   "dependencies": {
     "@types/bcryptjs": "^3.0.0",
+    "@types/cors": "^2.8.17",
     "@types/jsonwebtoken": "^9.0.9",
+    "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2"
   },
